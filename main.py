@@ -1,3 +1,4 @@
+#import encodedFiles
 import pygame
 import math
 import random
@@ -7,6 +8,9 @@ import threading
 import os
 import oznet
 import sys
+import startDialog
+
+print(os.getcwd())
 
 import tkinter as tk
 
@@ -24,7 +28,28 @@ pygame.mixer.pre_init(channels=12)
 
 pygame.init()
 
-name="Ossitech"
+name=""
+
+GAME_PORT=12000
+isHosting=True
+ips=[]
+ports={}
+SERVER_IP=None
+try:
+    name=sys.argv[1]
+    SERVER_IP=sys.argv[2]
+    SERVER_PORT=int(sys.argv[3])
+    GAME_PORT=int(sys.argv[4])
+    isHosting=False
+except:
+    pass
+
+name, isHosting, SERVER_IP, tmp_port = startDialog.start()
+
+if isHosting:
+    GAME_PORT=tmp_port
+else:
+    SERVER_PORT=tmp_port
 
 fullscreen=True
 
@@ -43,19 +68,7 @@ my=0
 
 #Netzwerk
 #region
-GAME_PORT=12000
-isHosting=True
-ips=[]
-ports={}
-SERVER_IP=None
-try:
-    name=sys.argv[1]
-    SERVER_IP=sys.argv[2]
-    SERVER_PORT=int(sys.argv[3])
-    GAME_PORT=int(sys.argv[4])
-    isHosting=False
-except:
-    pass
+
 oz=oznet.Oz("", GAME_PORT)
 def broadcast(msg):
     for ip in ips:
@@ -1856,18 +1869,11 @@ sRight=Edge(width, 0, width, height)
 
 edges=[]
 
-try:
-    os.chdir("D:/Programme_und_Coding/Python/LANGame")
-except Exception as e:
-    print("------")
-    print(e)
-    print("Konnte Ordner nicht finden!")
-
 #Resourcen
 #region
 
 curPath=os.getcwd()
-curPath="."
+#curPath="."
 
 #Sprites
 #default Player
@@ -1946,7 +1952,6 @@ weaponIcons.append(gunSprites["sniper"])#3
 #Sounds
 explosionSounds=[]
 for i in os.listdir(os.path.join(curPath, "Sounds", "Explosion")):
-    pass
     explosionSounds.append(pygame.mixer.Sound(os.path.join(curPath, "Sounds", "Explosion", i)))
 
 needleSounds=[]
@@ -1992,9 +1997,6 @@ edges=map.getEdges()
 
 players={}
 players[name]=defaultPlayer(150, 150, name)
-players[name].HP=10
-players["Fripy"]=assel(50, 50, "Fripy")
-players["Fripy"].HP=players["Fripy"].maxHP
 
 projectiles=[]
 
@@ -2181,6 +2183,12 @@ class PlayerMenu:
         drawCentered(s, weaponIcons[self.weaponIndexR], width*3/4, height/2, 0)
         if self.pointingAt==2:
             pygame.draw.rect(s, (255, 255, 255), ((width*3/4-20, height/2-20), (40, 40)), 2)
+        #Bestenliste
+        ipos=5
+        for pn in players:
+            text_image = pygame.font.Font(fontFile, 10).render(pn+": "+str(players[pn].score), False, (255, 255, 255))
+            s.blit(text_image, (5, ipos))
+            ipos+=15
     def doLeft(self):
         self.pointingAt=(self.pointingAt-1)%3
     def doRight(self):
