@@ -46,6 +46,9 @@ except:
 
 name, isHosting, SERVER_IP, tmp_port = startDialog.start()
 
+if tmp_port==0:
+    tmp_port=12000
+
 if isHosting:
     GAME_PORT=tmp_port
 else:
@@ -83,7 +86,7 @@ def host(msg, ip, port):
     if not ip in ips:
         ips.append(ip)
         ports[ip]=port
-    msg_splitted=msg.split()
+    msg_splitted=msg.split(" ")
     if msg_splitted[0]=="new_player_join":
         newName=msg_splitted[1]
         if newName in players:
@@ -97,7 +100,7 @@ def host(msg, ip, port):
                 if pn!=newName:
                     info="new_player "+pn+" "+str(players[pn].vesselIndex)+" "+str(players[pn].weaponL.weaponIndex)+" "+str(players[pn].weaponR.weaponIndex)+" "+str(players[pn].x)+" "+str(players[pn].y)+" "+str(players[pn].HP)
                     oz.send(info, ip, port)
-            oz.send(map.getText(), ip, port)
+            oz.sendImportant("map "+map.getText(), ip, port)
     elif msg_splitted[0]=="key_press":
         pn=msg_splitted[1]
         key=msg_splitted[2]
@@ -164,11 +167,13 @@ def host(msg, ip, port):
         players[pn].cury=y
         players[pn].angle=Edge(players[pn].x, players[pn].y, x, y).angle
         broadcast(msg)
+    elif msg_splitted[0]=="ping":
+        oz.sendImportant("pong", ip, port)
 #endregion
 #Client
 #region
 def client(msg, ip, port):
-    msg_splitted=msg.split()
+    msg_splitted=msg.split(" ")
     if msg_splitted[0]=="name_already_in_use":
         pygame.quit()
         print("Name "+name+" wird schon verwendet!")
@@ -273,6 +278,7 @@ def client(msg, ip, port):
         mapText=msg_splitted[1]
         global map
         global edges
+        print("Map empfangen: "+mapText)
         map=Map(text=mapText)
         edges=map.getEdges()
 def join():
@@ -312,7 +318,7 @@ class Map:
             self.width=0
             self.height=0
         if text!="":
-            self.plaintext=text
+            self.plaintext=text.replace(":", "\n")
             lines=text.split("\n")
             self.width=len(lines[0])
             self.height=len(lines)
@@ -381,7 +387,8 @@ class Map:
                 e+=1
         return edges
     def getText(self):
-        return self.plaintext
+        print("Map: "+self.plaintext)
+        return self.plaintext.replace("\n", ":")
 
 def getDistanceToEdge(x, y, edge):
     ne1=getAngledEdge(x, y, edge.angle+math.pi/2, 3000)
